@@ -1,6 +1,7 @@
 package com.findingway.direction.service;
 
 import com.findingway.api.dto.KakaoDocumentDto;
+import com.findingway.api.service.KakaoCategorySearchService;
 import com.findingway.direction.entity.Direction;
 import com.findingway.direction.repository.DirectionRepository;
 import com.findingway.pharmacy.service.PharmacySearchService;
@@ -9,11 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import javax.persistence.EntityNotFoundException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +29,8 @@ public class DirectionService {
     private final PharmacySearchService pharmacySearchService;
     private final DirectionRepository directionRepository;
 
+    private final KakaoCategorySearchService categorySearchService;
+    private final Base62Service base62Service;
 
 
 
@@ -56,7 +58,27 @@ public class DirectionService {
 
     }
 
+    // pharmacy search by category kakao api
+    public List<Direction> searchPharmacyByCategoryApi(KakaoDocumentDto inputDocumentDto) {
+        if(Objects.isNull(inputDocumentDto)) return Collections.emptyList();
 
+        return categorySearchService
+                .requestPharmacyCategorySearch(inputDocumentDto.getLatitude(), inputDocumentDto.getLongitude(), RADIUS_KM)
+                .getDocumentDtoList()
+                .stream().map(resultDocumentDto ->
+                        Direction.builder()
+                                .inputAddress(inputDocumentDto.getAddressName())
+                                .inputLatitude(inputDocumentDto.getLatitude())
+                                .inputLongitude(inputDocumentDto.getLongitude())
+                                .targetPharmacyName(resultDocumentDto.getPlaceName())
+                                .targetAddress(resultDocumentDto.getAddressName())
+                                .targetLatitude(resultDocumentDto.getLatitude())
+                                .targetLongitude(resultDocumentDto.getLongitude())
+                                .distance(resultDocumentDto.getDistance() * 0.001) // km 단위
+                                .build())
+                .limit(MAX_SEARCH_COUNT)
+                .collect(Collectors.toList());
+    }
     @Transactional
     public List<Direction> saveAll(List<Direction> directionList){
         if (CollectionUtils.isEmpty(directionList))
@@ -64,7 +86,18 @@ public class DirectionService {
        return directionRepository.saveAll(directionList);
     }
 
+    public String findDirectionUrlById(String encodeId){
+        Long directionId = base62Service.decodeDirectionId(encodeId);
+        Direction direction = directionRepository.findById(directionId).orElseThrow(EntityNotFoundException::new);
 
+        String params = String.join(",", direction.getTargetPharmacyName(), String.valueOf(direction.getTargetLatitude()),
+                String.valueOf(direction.getTargetLongitude()));
+
+        //Uri를 동적으로 생성해주는 클래스, .toUriString()는 한글을 UTF-8로 자동으로 인코딩 해준다.
+        String directionUrl = UriComponentsBuilder.fromHttpUrl(DIRECTION_VIEW_BASE_URL + params).toUriString();
+
+        return directionUrl;
+    }
 
 
     // Haversine formula
