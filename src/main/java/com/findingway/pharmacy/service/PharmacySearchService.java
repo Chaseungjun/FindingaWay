@@ -1,5 +1,6 @@
 package com.findingway.pharmacy.service;
 
+import com.findingway.pharmacy.cache.PharmacyRedisService;
 import com.findingway.pharmacy.dto.PharmacyDto;
 import com.findingway.pharmacy.entity.Pharmacy;
 import lombok.Getter;
@@ -16,9 +17,16 @@ public class PharmacySearchService {
 
 
     private final PharmacyRepositoryService pharmacyRepositoryService;
+    private final PharmacyRedisService redisService;
 
 
     public List<PharmacyDto> searchPharmacyDtoList(){
+
+        // redis에서 먼저 가져오고 없으면 DB에서 가져온다
+        List<PharmacyDto> pharmacyDtoList = redisService.findAll();
+        if (!pharmacyDtoList.isEmpty()){
+            return pharmacyDtoList;
+        }
 
         // DB
        return pharmacyRepositoryService.findAll().stream()
