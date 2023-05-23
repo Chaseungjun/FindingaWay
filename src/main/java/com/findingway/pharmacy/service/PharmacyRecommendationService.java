@@ -29,7 +29,7 @@ public class PharmacyRecommendationService {
     private final Base62Service base62Service;
 
     private static final String ROAD_VIEW_BASE_URL = "https://map.kakao.com/link/roadview/";
-    @Value("{pharmacy.recommendation.base.url}")
+    @Value("${pharmacy.recommendation.base.url}")
     private String baseUrl;
 
 
