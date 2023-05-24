@@ -43,9 +43,9 @@ public class PharmacyRecommendationService {
             return Collections.emptyList();
         }
 
-        KakaoDocumentDto documentDto = kakaoResponseDto.getDocumentDtoList().get(0);
+        KakaoDocumentDto documentDto = kakaoResponseDto.getDocumentDtoList().get(0);  // 주소 검색 결과들이 위도,경도,주소명의 주소데이터로 변경된 dto를 가져온다
 //        List<Direction> pharmacyList = directionService.searchPharmacyWithAddress(documentDto);  // 공공데이터 사용
-        List<Direction> pharmacyList = directionService.searchPharmacyByCategoryApi(documentDto);
+        List<Direction> pharmacyList = directionService.searchPharmacyByCategoryApi(documentDto);  // 조건을 반영한 약국 3개를 가져온다
 
         List<Direction> directionList = directionService.saveAll(pharmacyList);
         return directionList.stream()
