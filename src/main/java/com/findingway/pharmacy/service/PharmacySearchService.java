@@ -5,6 +5,7 @@ import com.findingway.pharmacy.dto.PharmacyDto;
 import com.findingway.pharmacy.entity.Pharmacy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Getter
+@Slf4j
 public class PharmacySearchService {
 
 
@@ -25,6 +27,7 @@ public class PharmacySearchService {
         // redis에서 먼저 가져오고 없으면 DB에서 가져온다
         List<PharmacyDto> pharmacyDtoList = redisService.findAll();
         if (!pharmacyDtoList.isEmpty()){
+            log.info("redis find All success");
             return pharmacyDtoList;
         }
 
